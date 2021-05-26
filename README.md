@@ -33,7 +33,7 @@ To set up lightly, head to the [Lightly web-app](https://app.lightly.ai) and cre
 TODO.
 
 ### 1.3 Data <a name=data>
-We will use the [MinneApple fruit detection dataset]. It consists of 670 training images of apple trees, annotated for detection and segmentation. The dataset contains images of trees with red and green apples.
+We will use the [MinneApple fruit detection dataset](TODO). It consists of 670 training images of apple trees, annotated for detection and segmentation. The dataset contains images of trees with red and green apples.
 TODO download!
 
 ## 2 Active Learning <a name=al>
@@ -61,7 +61,8 @@ The above command will display the id of your dataset. You will need this later 
 
 Once the upload has finished, you can visually explore your dataset in the web-app.
 
-TODO image
+<img src="./docs/gifs/MinneApple Lightly Showcase.gif">
+
 
 ### 2.1 Initial Sampling <a name=sampling>
 
@@ -114,7 +115,9 @@ tlt yolo_v4 inference \
     -k MY_KEY
 ```
 
-Below you can see two example images after training. TODO
+Below you can see two example images after training.
+
+<img src="./docs/examples/MinneApple_labeled_vs_unlabeled.png">
 
 
 ### 2.3 Active Learning Step <a name=alstep>
