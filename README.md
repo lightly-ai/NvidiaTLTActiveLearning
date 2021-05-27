@@ -2,7 +2,7 @@
 Tutorial on active learning with the Nvidia Transfer Learning Toolkit (TLT).
 
 
-In this tutorial, we will show you how you can do active learning for object detection with the [Nvidia Transfer Learning Toolkit](https://developer.nvidia.com/transfer-learning-toolkit). The task will be fruit detection. Accurately detecting and counting fruits is a critical step towards automating harvesting processes.
+In this tutorial, we will show you how you can do active learning for object detection with the [Nvidia Transfer Learning Toolkit](https://developer.nvidia.com/transfer-learning-toolkit). The task will be object detection of apples in a plantation setting. Accurately detecting and counting fruits is a critical step towards automating harvesting processes.
 Furthermore, fruit counting can be used to project expected yield and hence to detect low yield years early on.
 
 The structure of the tutorial is as follows:
@@ -52,8 +52,31 @@ Next, we need to specify all training configurations. The Nvidia TLT expects all
 - Target Class Mapping: To do transfer learning, we made a target class mapping from `car` to `apple`. This means that everytime the model would now predict a car, it predicts an apple instead.
 
 ### 1.3 Data <a name=data>
-We will use the [MinneApple fruit detection dataset](TODO). It consists of 670 training images of apple trees, annotated for detection and segmentation. The dataset contains images of trees with red and green apples.
-TODO download!
+We will use the [MinneApple fruit detection dataset](https://conservancy.umn.edu/handle/11299/206575). It consists of 670 training images of apple trees, annotated for detection and segmentation. The dataset contains images of trees with red and green apples.
+
+**Note:** The Nvidia TLT expects the data and labels in the KITTI format. This means they expect one folder containing the images and one folder containing the annotations. The name of an image and its corresponding annotation file must be the same apart from the file extension. You can find the MinneApple dataset converted to this format attached to the release of this tutorial. Alternatively, you can download the files from the official link and convert the labels yourself.
+
+Move the downloaded `minneapple.zip` file to the `data/` directory and unzip it
+
+```
+cd data/
+unzip minneapple.zip
+cd ..
+```
+
+Here's an example of how the converted labels look like. Note how we use the label `car` instead of `apple` because of the target class mapping we had defined in section [1.2](#tlt).
+
+```
+Car 0. 0 0. 1.0 228.0 6.0 241.0 0. 0. 0. 0. 0. 0. 0.
+Car 0. 0 0. 5.0 228.0 28.0 249.0 0. 0. 0. 0. 0. 0. 0.
+Car 0. 0 0. 30.0 238.0 46.0 256.0 0. 0. 0. 0. 0. 0. 0.
+Car 0. 0 0. 37.0 214.0 58.0 234.0 0. 0. 0. 0. 0. 0. 0.
+Car 0. 0 0. 82.0 261.0 104.0 281.0 0. 0. 0. 0. 0. 0. 0.
+Car 0. 0 0. 65.0 283.0 82.0 301.0 0. 0. 0. 0. 0. 0. 0.
+Car 0. 0 0. 82.0 284.0 116.0 317.0 0. 0. 0. 0. 0. 0. 0.
+Car 0. 0 0. 111.0 274.0 142.0 306.0 0. 0. 0. 0. 0. 0. 0.
+Car 0. 0 0. 113.0 308.0 131.0 331.0 0. 0. 0. 0. 0. 0. 0.
+```
 
 ## 2 Active Learning <a name=al>
 Now that our setup is complete, we can start the active learning loop. In general, the active learning loop will consist of the following steps:
@@ -96,7 +119,7 @@ python active_learning_query.py \
     --token YOUR_TOKEN \
     --dataset_id YOUR_DATASET_ID \
     --new_tag_name 'initial-selection' \
-    --n_samples 100
+    --n_samples 100 \
     --method CORESET
 ```
 
@@ -152,7 +175,7 @@ ngc registry model download-version nvidia tlt_pretrained_object_detection:resne
     --dest ./yolo_v4/pretrained_resnet18
 ```
 
-Finetuning the object detector on our sampled training data is as simple as the following command. Make sure to replace MY_KEY with the API token you get from your Nvidia account TODO.
+Finetuning the object detector on our sampled training data is as simple as the following command. Make sure to replace MY_KEY with the API token you get from your [Nvidia account](https://ngc.nvidia.com/setup/api-key).
 
 ```
 mkdir -p $PWD/yolo_v4/experiment_dir_unpruned
@@ -187,7 +210,7 @@ We can use the inferences from the previous step to determine with which images 
 
 This section is about how to select the images which complete your training dataset. We can use the `active_learning_query.py` script again but this time we have to indicate that there already exists a set of preselected images and indicate where the inferences are stored so that the script can compute active learning scores.
 
-Furthermore, we will use `CORAL` as a sampling method. `CORAL` imultaneously maximizes the diversity and the sum of the active learning scores in the sampled data.
+Furthermore, we will use `CORAL` as a sampling method. `CORAL` simultaneously maximizes the diversity and the sum of the active learning scores in the sampled data.
 
 ```
 python active_learning_query.py \
@@ -195,7 +218,7 @@ python active_learning_query.py \
     --dataset_id YOUR_DATASET_ID \
     --preselected_tag_name 'initial-selection' \
     --new_tag_name 'al-iteration-1' \
-    --n_samples 200
+    --n_samples 200 \
     --method CORAL
 ```
 
@@ -253,4 +276,4 @@ tlt yolo_v4 train \
     -k MY_KEY
 ```
 
-If you're still unhappy with the performance after re-training the model, you can repeat steps [2.2](#training) and [2.3](#alstep) and the re-train the model again.
+If you're still unhappy with the performance after re-training the model, you can repeat steps [2.2](#training) and [2.3](#alstep) and then re-train the model again.

@@ -3,12 +3,7 @@ from typing import List
 import os
 import shutil
 
-
-def image_filename_to_label_filename(image_filename: str):
-    """Converts the imagefilename to the label filename.
-    
-    """
-    return f'{os.path.splitext(image_filename)[0]}.txt'
+import helpers
 
 
 def annotate_images(filenames: List[str],
@@ -26,7 +21,7 @@ def annotate_images(filenames: List[str],
     
     for image_filename in filenames:
         
-        label_filename = image_filename_to_label_filename(image_filename)
+        label_filename = helpers.image_filename_to_label_filename(image_filename)
         
         # copy image
         shutil.copyfile(
