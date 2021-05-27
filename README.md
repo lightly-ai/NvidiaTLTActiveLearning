@@ -1,6 +1,13 @@
 # Active Lerarning with the Nvidia TLT
 Tutorial on active learning with the Nvidia Transfer Learning Toolkit (TLT).
 
+
+In this tutorial, we will show you how you can do active learning for object detection with the [Nvidia Transfer Learning Toolkit](https://developer.nvidia.com/transfer-learning-toolkit). The task will be fruit detection. Accurately detecting and counting fruits is a critical step towards automating harvesting processes.
+Furthermore, fruit counting can be used to project expected yield and hence to detect low yield years early on.
+
+The structure of the tutorial is as follows:
+
+
 1. [Prerequisites](#prerequisites)
     1. [Set up Lightly](#lightly)
     2. [Set up Nvidia TLT](#tlt)
@@ -12,6 +19,13 @@ Tutorial on active learning with the Nvidia Transfer Learning Toolkit (TLT).
     4. [Re-training](#retraining)
 
 
+To get started, clone this repository to your machine and change the directory.
+```
+git clone https://github.com/lightly-ai/NvidiaTLTActiveLearning.git
+cd NvidiaTLTActiveLearning
+```
+
+
 ## 1 Prerequisites <a name=prerequisites>
 
 We start by creating a few directories which we'll need during the tutorial.
@@ -20,7 +34,7 @@ mkdir -p data/raw/images
 mkdir -p data/raw/labels
 ```
 
-Additionally, we need to install `lightly`, `numpy` and `matplotlib`.
+Additionally, we need to install [`lightly`](https://github.com/lightly-ai/lightly), `numpy` and `matplotlib`.
 ```
 pip install -r requirements.txt
 ```
@@ -30,7 +44,18 @@ pip install -r requirements.txt
 To set up lightly, head to the [Lightly web-app](https://app.lightly.ai) and create a free account by logging in. Make sure to get your token by clicking on your e-mail address and selecting "Preferences". You will need the token for the rest of this tutorial.
 
 ### 1.2 Set up Nvidia TLT <a name=tlt>
-TODO.
+To install the Nvidia Transfer Learning Toolkit, follow [these instructions](https://docs.nvidia.com/metropolis/TLT/tlt-user-guide/text/requirements_and_installation.html). If you want to use your own scripts for training and inference, you can skip this part.
+
+To make all relevant directories accessible to the Nvidia TLT, we need to mount the current working directory and the `yolo_v4/specs` directory to the Nvidia TLT docker. We do so with the `mount.py` script.
+
+```
+python mount.py
+```
+
+Next, we need to specify all training configurations. The Nvidia TLT expects all training configurations in a `.txt` file which is stored in the `yolo_v4/specs/` directory. For the purpose of this tutorial we provide an example in `yolo_v4_minneapple.txt`. The most important differences to the example script provided by Nvidia are:
+- Anchor Shapes: We made the anchor boxes smaller since the largest bounding boxes in our dataset are only approximately 50 pixels wide.
+- Augmentation Config: We set the output width and height of the augmentations to 704 and 1280 respectively. This corresponds to the shape of our images.
+- Target Class Mapping: To do transfer learning, we made a target class mapping from `car` to `apple`. This means that everytime the model would now predict a car, it predicts an apple instead.
 
 ### 1.3 Data <a name=data>
 We will use the [MinneApple fruit detection dataset](TODO). It consists of 670 training images of apple trees, annotated for detection and segmentation. The dataset contains images of trees with red and green apples.
@@ -44,7 +69,7 @@ Now that our setup is complete, we can start the active learning loop. In genera
 
 We will walk you through all three steps in this tutorial.
 
-To do active learning with Lightly, we need to upload our dataset to the platform. The command `lightly-magic` will train a self-supervised model to get good image representations and then uploads the images along with the image representations to the platform. If you want to skip training, you can set `trainer.max_epochs=0`. In the following command, replace `MY_TOKEN` in the example with your own token from the platform.
+To do active learning with Lightly, we need to upload our dataset to the platform. The command `lightly-magic` will train a self-supervised model to get good image representations and then uploads the images along with the image representations to the platform. If you want to skip training, you can set `trainer.max_epochs=0`. In the following command, replace `MY_TOKEN` with your own token from the platform.
 
 
 ```
