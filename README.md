@@ -1,4 +1,4 @@
-# Active Lerarning with the Nvidia TLT
+# Active Learning with the Nvidia TLT
 Tutorial on active learning with the Nvidia Transfer Learning Toolkit (TLT).
 
 
@@ -28,14 +28,14 @@ cd NvidiaTLTActiveLearning
 
 ## 1 Prerequisites <a name=prerequisites>
 
-For this tutorial, we require Python 3.6 or higher. We also need to install [`lightly`](https://github.com/lightly-ai/lightly), `numpy` and `argparse`.
+For this tutorial, you require Python 3.6 or higher. You also need to install [`lightly`](https://github.com/lightly-ai/lightly), `numpy` and `argparse`.
 ```
 pip install -r requirements.txt
 ```
 
 
 ### 1.1 Set up Lightly <a name=lightly>
-To set up lightly, head to the [Lightly web-app](https://app.lightly.ai) and create a free account by logging in. Make sure to get your token by clicking on your e-mail address and selecting "Preferences". You will need the token for the rest of this tutorial.
+To set up `lightly`, head to the [Lightly web-app](https://app.lightly.ai) and create a free account by logging in. Make sure to get your token by clicking on your e-mail address and selecting "Preferences". You will need the token for the rest of this tutorial.
 
 ### 1.2 Set up Nvidia TLT <a name=tlt>
 To install the Nvidia Transfer Learning Toolkit, follow [these instructions](https://docs.nvidia.com/metropolis/TLT/tlt-user-guide/text/requirements_and_installation.html). If you want to use your own scripts for training and inference, you can skip this part.
@@ -47,21 +47,21 @@ Setting up Nvidia TLT can be done in a few minutes and consists of the follwing 
 3. Install [nvidia docker2](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
 4. Get an [NGC account and API key](https://ngc.nvidia.com/catalog).
 
-To make all relevant directories accessible to the Nvidia TLT, we need to mount the current working directory and the `yolo_v4/specs` directory to the Nvidia TLT docker. We do so with the `mount.py` script.
+To make all relevant directories accessible to the Nvidia TLT, you need to mount the current working directory and the `yolo_v4/specs` directory to the Nvidia TLT docker. You can do so with the provided `mount.py` script.
 
 ```
 python mount.py
 ```
 
-Next, we need to specify all training configurations. The Nvidia TLT expects all training configurations in a `.txt` file which is stored in the `yolo_v4/specs/` directory. For the purpose of this tutorial we provide an example in `yolo_v4_minneapple.txt`. The most important differences to the example script provided by Nvidia are:
+Next, you need to specify all training configurations. The Nvidia TLT expects all training configurations in a `.txt` file which is stored in the `yolo_v4/specs/` directory. For the purpose of this tutorial we provide an example in `yolo_v4_minneapple.txt`. The most important differences to the example script provided by Nvidia are:
 - Anchor Shapes: We made the anchor boxes smaller since the largest bounding boxes in our dataset are only approximately 50 pixels wide.
 - Augmentation Config: We set the output width and height of the augmentations to 704 and 1280 respectively. This corresponds to the shape of our images.
 - Target Class Mapping: To do transfer learning, we made a target class mapping from `car` to `apple`. This means that everytime the model would now predict a car, it predicts an apple instead.
 
 ### 1.3 Data <a name=data>
-We will use the [MinneApple fruit detection dataset](https://conservancy.umn.edu/handle/11299/206575). It consists of 670 training images of apple trees, annotated for detection and segmentation. The dataset contains images of trees with red and green apples.
+In this tutorial we will use the [MinneApple fruit detection dataset](https://conservancy.umn.edu/handle/11299/206575). It consists of 670 training images of apple trees, annotated for detection and segmentation. The dataset contains images of trees with red and green apples.
 
-**Note:** The Nvidia TLT expects the data and labels in the KITTI format. This means they expect one folder containing the images and one folder containing the annotations. The name of an image and its corresponding annotation file must be the same apart from the file extension. You can find the MinneApple dataset converted to this format attached to the release of this tutorial. Alternatively, you can download the files from the official link and convert the labels yourself.
+**Note:** The Nvidia TLT expects the data and labels in the KITTI format. This means they expect one folder containing the images and one folder containing the annotations. The name of an image and its corresponding annotation file must be the same apart from the file extension. You can find the MinneApple dataset converted to this format attached to the first release of this tutorial. Alternatively, you can download the files from the official link and convert the labels yourself.
 
 Move the downloaded `minneapple.zip` file to the `data/` directory and unzip it
 
@@ -86,15 +86,16 @@ Car 0. 0 0. 113.0 308.0 131.0 331.0 0. 0. 0. 0. 0. 0. 0.
 ```
 
 ## 2 Active Learning <a name=al>
-Now that our setup is complete, we can start the active learning loop. In general, the active learning loop will consist of the following steps:
+Now that the setup is complete, you can start the active learning loop. In general, the active learning loop will consist of the following steps:
 1. Initial sampling: Get an initial set of images to annotate and train on.
 2. Training and inference: Train on the labeled data and make predictions on all data.
 3. Active learning query: Use the predictions to get the next set of images to annotate, go to 2.
 
 We will walk you through all three steps in this tutorial.
 
-To do active learning with Lightly, we need to upload our dataset to the platform. The command `lightly-magic` will train a self-supervised model to get good image representations and then uploads the images along with the image representations to the platform. If you want to skip training, you can set `trainer.max_epochs=0`. In the following command, replace `MY_TOKEN` with your own token from the platform.
+To do active learning with Lightly, you first need to upload your dataset to the platform. The command `lightly-magic` trains a self-supervised model to get good image representations and then uploads the images along with the image representations to the platform. If you want to skip training, you can set `trainer.max_epochs=0`. In the following command, replace `MY_TOKEN` with your own token from the platform.
 
+> You can also upload thumbnails or even just metadata about the images. See [this link](https://docs.lightly.ai/lightly.cli.html#lightly.cli.upload_cli.upload_cli) for more information.
 
 ```
 lightly-magic \
@@ -115,11 +116,11 @@ Once the upload has finished, you can visually explore your dataset in the web-a
 
 ### 2.1 Initial Sampling <a name=sampling>
 
-Let's select an initial batch of images which we want to annotate.
+Now, let's select an initial batch of images which for annotation and training.
 
 Lightly offers different sampling strategies, the most prominent ones being `CORESET` and `RANDOM` sampling. `RANDOM` sampling will preserve the underlying distribution of your dataset well while `CORESET` maximizes the heterogeneity of your dataset. While exploring our dataset in the [web-app](https://app.lightly.ai), we noticed many different clusters therefore we choose `CORESET` sampling to make sure that every cluster is represented in the training data.
 
-We use the `active_learning_query.py` script to make an initial selection:
+Use the `active_learning_query.py` script to make an initial selection:
 
 ```
 python active_learning_query.py \
@@ -172,9 +173,9 @@ ls data/train/labels | wc -l
 ```
 
 ### 2.2 Training and Inference <a name=training>
-Now that we have our annotated training data, let's train an object detection model on it and see how well it works! We use the Nvidia Transfer Learning Toolkit which allows us to train a YOLOv4 object detector from the command line. The cool thing about transfer learning is that we don't have to train a model from scratch and so we require fewer annotated images to get good results.
+Now that we have our annotated training data, let's train an object detection model on it and see how well it works! Use the Nvidia Transfer Learning Toolkit to train a YOLOv4 object detector from the command line. The cool thing about transfer learning is that you don't have to train a model from scratch and therefore require fewer annotated images to get good results.
 
-Let's start by downloading a pre-trained object detection model from the Nvidia registry.
+Start by downloading a pre-trained object detection model from the Nvidia registry.
 
 ```
 mkdir -p ./yolo_v4/pretrained_resnet18
@@ -182,7 +183,7 @@ ngc registry model download-version nvidia/tlt_pretrained_object_detection:resne
     --dest ./yolo_v4/pretrained_resnet18
 ```
 
-Finetuning the object detector on our sampled training data is as simple as the following command. Make sure to replace MY_KEY with the API token you get from your [Nvidia account](https://ngc.nvidia.com/catalog).
+Finetuning the object detector on the sampled training data is as simple as the following command. Make sure to replace YOUR_KEY with the API token you get from your [Nvidia account](https://ngc.nvidia.com/catalog).
 
 ```
 mkdir -p $PWD/yolo_v4/experiment_dir_unpruned
@@ -190,12 +191,12 @@ tlt yolo_v4 train \
     -e /workspace/tlt-experiments/yolo_v4/specs/yolo_v4_minneapple.txt \
     -r /workspace/tlt-experiments/yolo_v4/experiment_dir_unpruned \
     --gpus 1 \
-    -k MY_KEY
+    -k YOUR_KEY
 ``` 
 
-Now that we have finetuned the object detector on our dataset, we can do inference to see how well it works.
+Now that you have finetuned the object detector on your dataset, you can do inference to see how well it works.
 
-Doing inference on the whole dataset has the advantage that we can figure out for which images the model performs poorly or has a lot of uncertainties.
+Doing inference on the whole dataset has the advantage that you can easily figure out for which images the model performs poorly or has a lot of uncertainties.
 
 ```
 tlt yolo_v4 inference \
@@ -207,17 +208,17 @@ tlt yolo_v4 inference \
     -k MY_KEY
 ```
 
-Below you can see two example images after training. It's evident that the model does not perform well on the unlabeled image. Therefore, we want to do add more samples to the training dataset.
+Below you can see two example images after training. It's evident that the model does not perform well on the unlabeled image. Therefore, it makes sense to add more samples to the training dataset.
 
 <img src="./docs/examples/MinneApple_labeled_vs_unlabeled.png">
 
 
 ### 2.3 Active Learning Step <a name=alstep>
-We can use the inferences from the previous step to determine with which images the model has problems. With Lightly, we can easily select these images while at the same time making sure that our training dataset is not flooded with duplicates.
+You can use the inferences from the previous step to determine which images cause the model problems. With Lightly, you can easily select these images while at the same time making sure that your training dataset is not flooded with duplicates.
 
-This section is about how to select the images which complete your training dataset. We can use the `active_learning_query.py` script again but this time we have to indicate that there already exists a set of preselected images and indicate where the inferences are stored so that the script can compute active learning scores.
+This section is about how to select the images which complete your training dataset. You can use the `active_learning_query.py` script again but this time you have to indicate that there already exists a set of preselected images and point the script to where the inferences are stored.
 
-Furthermore, we will use `CORAL` as a sampling method. `CORAL` simultaneously maximizes the diversity and the sum of the active learning scores in the sampled data.
+Use `CORAL` instead of `CORESET` as a sampling method. `CORAL` simultaneously maximizes the diversity and the sum of the active learning scores in the sampled data.
 
 ```
 python active_learning_query.py \
@@ -229,7 +230,7 @@ python active_learning_query.py \
     --method CORAL
 ```
 
-The script works very similar to before but with one significant difference: This time, all the inferred labels are loaded and used to calculate an active learning score for each sample:
+The script works very similar to before but with one significant difference: This time, all the inferred labels are loaded and used to calculate an active learning score for each sample.
 
 ```python
 # create a scorer to calculate active learning scores based on model outputs
@@ -273,7 +274,7 @@ ls data/train/labels | wc -l
 
 ### 2.4 Re-training <a name=retraining>
 
-We can re-train our object detector on the new dataset to get an even better model. For this, we can use the same command as before. If you want to continue training from the last checkpoint, make sure to replace the pretrain_model_path in the specs file by a resume_model_path:
+You can re-train our object detector on the new dataset to get an even better model. For this, you can use the same command as before. If you want to continue training from the last checkpoint, make sure to replace the pretrain_model_path in the specs file by a resume_model_path:
 
 ```
 tlt yolo_v4 train \
