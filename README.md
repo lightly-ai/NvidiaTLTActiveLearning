@@ -34,16 +34,16 @@ pip install -r requirements.txt
 ```
 
 
-### 1.1 Set up Lightly <a name=lightly>
-To set up `lightly`, head to the [Lightly web-app](https://app.lightly.ai) and create a free account by logging in. Make sure to get your token by clicking on your e-mail address and selecting "Preferences". You will need the token for the rest of this tutorial.
+### 1.1 Set up Lightly for Active Learning <a name=lightly>
+To set up `lightly` for active learning, head to the [Lightly Platform](https://app.lightly.ai) and create a free account by logging in. Make sure to get your token by clicking on your e-mail address and selecting "Preferences". You will need the token for the rest of this tutorial.
 
 ### 1.2 Set up Nvidia TLT <a name=tlt>
-To install the Nvidia Transfer Learning Toolkit, follow [these instructions](https://docs.nvidia.com/metropolis/TLT/tlt-user-guide/text/requirements_and_installation.html). If you want to use your own scripts for training and inference, you can skip this part.
+To install the Nvidia Transfer Learning Toolkit, follow [these instructions](https://docs.nvidia.com/metropolis/TLT/tlt-user-guide/text/requirements_and_installation.html). If you want to use custom scripts for training and inference, you can skip this part.
 
 
-Setting up Nvidia TLT can be done in a few minutes and consists of the follwing steps:
+Setting up Nvidia TLT can be done in a few minutes and consists of the following steps:
 1. Install [Docker](https://www.docker.com/).
-2. Install [Nvidia GPU driver](https://www.nvidia.com/Download/index.aspx?lang=en-us) v455.xx or abvoe.
+2. Install [Nvidia GPU driver](https://www.nvidia.com/Download/index.aspx?lang=en-us) v455.xx or above.
 3. Install [nvidia docker2](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
 4. Get an [NGC account and API key](https://ngc.nvidia.com/catalog).
 
@@ -53,17 +53,17 @@ To make all relevant directories accessible to the Nvidia TLT, you need to mount
 python mount.py
 ```
 
-Next, you need to specify all training configurations. The Nvidia TLT expects all training configurations in a `.txt` file which is stored in the `yolo_v4/specs/` directory. For the purpose of this tutorial we provide an example in `yolo_v4_minneapple.txt`. The most important differences to the example script provided by Nvidia are:
+Next, you need to specify all training configurations. The Nvidia TLT expects all training configurations in a `.txt` file which is stored in the `yolo_v4/specs/` directory. For the purpose of this tutorial **we provide an example in `yolo_v4_minneapple.txt`**. The most important differences to the example script provided by Nvidia are:
 - Anchor Shapes: We made the anchor boxes smaller since the largest bounding boxes in our dataset are only approximately 50 pixels wide.
 - Augmentation Config: We set the output width and height of the augmentations to 704 and 1280 respectively. This corresponds to the shape of our images.
-- Target Class Mapping: To do transfer learning, we made a target class mapping from `car` to `apple`. This means that everytime the model would now predict a car, it predicts an apple instead.
+- Target Class Mapping: For transfer learning, we made a target class mapping from `car` to `apple`. This means that every time the model would now predict a car, it predicts an apple instead.
 
 ### 1.3 Data <a name=data>
-In this tutorial we will use the [MinneApple fruit detection dataset](https://conservancy.umn.edu/handle/11299/206575). It consists of 670 training images of apple trees, annotated for detection and segmentation. The dataset contains images of trees with red and green apples.
+In this tutorial, we will use the [MinneApple fruit detection dataset](https://conservancy.umn.edu/handle/11299/206575). It consists of 670 training images of apple trees, annotated for detection and segmentation. The dataset contains images of trees with red and green apples.
 
-**Note:** The Nvidia TLT expects the data and labels in the KITTI format. This means they expect one folder containing the images and one folder containing the annotations. The name of an image and its corresponding annotation file must be the same apart from the file extension. You can find the MinneApple dataset converted to this format attached to the first release of this tutorial. Alternatively, you can download the files from the official link and convert the labels yourself.
+**Note:** The Nvidia TLT expects the data and labels in the [KITTI format](https://github.com/bostondiditeam/kitti/blob/master/resources/devkit_object/readme.txt). This means they expect one folder containing the images and one folder containing the annotations. The name of an image and its corresponding annotation file must be the same apart from the file extension. [You can find the MinneApple dataset converted to this format attached to the first release of this tutorial](https://github.com/lightly-ai/NvidiaTLTActiveLearning/releases/download/v1.0-alpha/minneapple.zip). Alternatively, you can download the files from the official link and convert the labels yourself.
 
-Create a `data/` directory, move the downloaded `minneapple.zip` file there, and and unzip it
+Create a `data/` directory, move the downloaded `minneapple.zip` file there, and unzip it
 
 ```
 cd data/
@@ -93,7 +93,7 @@ Now that the setup is complete, you can start the active learning loop. In gener
 
 We will walk you through all three steps in this tutorial.
 
-To do active learning with Lightly, you first need to upload your dataset to the platform. The command `lightly-magic` trains a self-supervised model to get good image representations and then uploads the images along with the image representations to the platform. If you want to skip training, you can set `trainer.max_epochs=0`. In the following command, replace `MY_TOKEN` with your own token from the platform.
+To do active learning with Lightly, you first need to upload your dataset to the platform. The command `lightly-magic` trains a self-supervised model to get good image representations and then uploads the images along with the image representations to the platform. If you want to skip training, you can set `trainer.max_epochs=0`. In the following command, replace `MY_TOKEN` with your token from the platform.
 
 > You can also upload thumbnails or even just metadata about the images. See [this link](https://docs.lightly.ai/lightly.cli.html#lightly.cli.upload_cli.upload_cli) for more information.
 
@@ -109,7 +109,7 @@ lightly-magic \
 
 The above command will display the id of your dataset. You will need this later in the tutorial.
 
-Once the upload has finished, you can visually explore your dataset in the web-app.
+Once the upload has finished, you can visually explore your dataset in the [Lightly Platform](https://app.lightly.ai/).
 
 <img src="./docs/gifs/MinneApple Lightly Showcase.gif">
 
@@ -118,7 +118,7 @@ Once the upload has finished, you can visually explore your dataset in the web-a
 
 Now, let's select an initial batch of images which for annotation and training.
 
-Lightly offers different sampling strategies, the most prominent ones being `CORESET` and `RANDOM` sampling. `RANDOM` sampling will preserve the underlying distribution of your dataset well while `CORESET` maximizes the heterogeneity of your dataset. While exploring our dataset in the [web-app](https://app.lightly.ai), we noticed many different clusters therefore we choose `CORESET` sampling to make sure that every cluster is represented in the training data.
+Lightly offers different sampling strategies, the most prominent ones being `CORESET` and `RANDOM` sampling. `RANDOM` sampling will preserve the underlying distribution of your dataset well while `CORESET` maximizes the heterogeneity of your dataset. While exploring our dataset in the [Lightly Platform](https://app.lightly.ai), we noticed many different clusters therefore we choose `CORESET` sampling to make sure that every cluster is represented in the training data.
 
 Use the `active_learning_query.py` script to make an initial selection:
 
@@ -133,7 +133,7 @@ python active_learning_query.py \
 
 The above script roughly performs the following steps:
 
-It creates an API client in order to communicate with the Lightly API.
+It creates an API client to communicate with the Lightly API.
 
 ```python
 # create an api client
@@ -164,7 +164,7 @@ al_agent.query(config)
 oracle.annotate_images(al_agent.added_set)
 ```
 
-The `query` will automatically create a new tag with the name `initial-selection` in the web-app.
+The `query` will automatically create a new tag with the name `initial-selection` in the Lightly Platform.
 
 You can verify that the number of annotated images is correct like this:
 ```
@@ -230,14 +230,14 @@ python active_learning_query.py \
     --method CORAL
 ```
 
-The script works very similar to before but with one significant difference: This time, all the inferred labels are loaded and used to calculate an active learning score for each sample.
+The script works very similarly to before but with one significant difference: This time, all the inferred labels are loaded and used to calculate an active learning score for each sample.
 
 ```python
 # create a scorer to calculate active learning scores based on model outputs
 scorer = ScorerObjectDetection(model_outputs)
 ```
 
-The rest of the script is almost same as for the initial selection:
+The rest of the script is almost the same as for the initial selection:
 
 ```python
 # create an api client
