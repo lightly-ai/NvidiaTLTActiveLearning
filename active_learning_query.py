@@ -21,7 +21,7 @@ if __name__ == '__main__':
                         help='Name of the tag of preselected samples')
     parser.add_argument('--new_tag_name', type=str, default='initial-selection',
                         help='Name of the new tag in the web-app')
-    parser.add_argument('--n_samples', type=str, default=100,
+    parser.add_argument('--n_samples', type=int, default=100,
                         help='Total number of samples after the query')
     parser.add_argument('--method', type=str, default='CORESET',
                         help='Sampling method from [CORESET, RANDOM, CORAL]')
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     # create a scorer if inferences exist
     scorer = None
     if os.path.isdir(args.inferences) and args.preselected_tag_name is not None:
-        model_outputs = helpers.load_model_outputs(args.inferences)
+        model_outputs = helpers.load_model_outputs(al_agent, args.inferences)
         scorer = ScorerObjectDetection(model_outputs)
 
     # make an active learning query

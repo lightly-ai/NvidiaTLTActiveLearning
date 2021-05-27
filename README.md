@@ -171,7 +171,7 @@ Let's start by downloading a pre-trained object detection model from the Nvidia 
 
 ```
 mkdir -p ./yolo_v4/pretrained_resnet18
-ngc registry model download-version nvidia tlt_pretrained_object_detection:resnet18 \
+ngc registry model download-version nvidia/tlt_pretrained_object_detection:resnet18 \
     --dest ./yolo_v4/pretrained_resnet18
 ```
 
