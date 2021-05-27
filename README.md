@@ -28,13 +28,7 @@ cd NvidiaTLTActiveLearning
 
 ## 1 Prerequisites <a name=prerequisites>
 
-We start by creating a few directories which we'll need during the tutorial.
-```
-mkdir -p data/raw/images
-mkdir -p data/raw/labels
-```
-
-Additionally, we need to install [`lightly`](https://github.com/lightly-ai/lightly), `numpy` and `matplotlib`.
+For this tutorial, we require Python 3.6 or higher. We also need to install [`lightly`](https://github.com/lightly-ai/lightly), `numpy` and `argparse`.
 ```
 pip install -r requirements.txt
 ```
@@ -65,7 +59,7 @@ TODO download!
 Now that our setup is complete, we can start the active learning loop. In general, the active learning loop will consist of the following steps:
 1. Initial sampling: Get an initial set of images to annotate and train on.
 2. Training and inference: Train on the labeled data and make predictions on all data.
-3. Active learning query: Use the predictions to get the next set of images to annotate, to to 2.
+3. Active learning query: Use the predictions to get the next set of images to annotate, go to 2.
 
 We will walk you through all three steps in this tutorial.
 
@@ -93,16 +87,59 @@ Once the upload has finished, you can visually explore your dataset in the web-a
 
 Let's select an initial batch of images which we want to annotate.
 
-Lightly offers different sampling strategies, the most prominent ones being `CORESET` and `RANDOM` sampling. `RANDOM` sampling will preserve the underlying distribution of your dataset well while `CORESET` maximizes the heterogeneity of your dataset. While exploring our dataset in the [web-app](https://app.lightly.ai), we notices many different clusters therefore we choose `CORESET` sampling to make sure that every cluster is represented in the training data.
+Lightly offers different sampling strategies, the most prominent ones being `CORESET` and `RANDOM` sampling. `RANDOM` sampling will preserve the underlying distribution of your dataset well while `CORESET` maximizes the heterogeneity of your dataset. While exploring our dataset in the [web-app](https://app.lightly.ai), we noticed many different clusters therefore we choose `CORESET` sampling to make sure that every cluster is represented in the training data.
 
 We use the `active_learning_query.py` script to make an initial selection:
 
 ```
-python active_learning_query.py TODO
+python active_learning_query.py \
+    --token YOUR_TOKEN \
+    --dataset_id YOUR_DATASET_ID \
+    --new_tag_name 'initial-selection' \
+    --n_samples 100
+    --method CORESET
 ```
 
 The above script roughly performs the following steps:
-TODO
+
+It creates an API client in order to communicate with the Lightly API.
+
+```python
+# create an api client
+client = ApiWorkflowClient(
+    token=YOUR_TOKEN,
+    dataset_id=YOUR_DATASET_ID,
+)
+```
+Then, it creates an active learning agent which serves as an interface to do active learning.
+
+```python
+# create an active learning agent
+al_agent = ActiveLearningAgent(client)
+```
+
+Finally, it creates a sampling configuration, makes an active learning query, and puts the annotated images into the `data/train` directory.
+
+```python
+# make an active learning query
+cofnig = SamplerConfig(
+    n_samples=100,
+    method=SamplingMethod.CORESET,
+    name='initial-selection',
+)
+al_agent.query(config)
+
+# simulate annotation step by copying the data to the data/train directory 
+oracle.annotate_images(al_agent.added_set)
+```
+
+The `query` will automatically create a new tag with the name `initial-selection` in the web-app.
+
+You can verify that the number of annotated images is correct like this:
+```
+ls data/train/images | wc -l
+ls data/train/labels | wc -l
+```
 
 ### 2.2 Training and Inference <a name=training>
 Now that we have our annotated training data, let's train an object detection model on it and see how well it works! We use the Nvidia Transfer Learning Toolkit which allows us to train a YOLOv4 object detector from the command line. The cool thing about transfer learning is that we don't have to train a model from scratch and so we require fewer annotated images to get good results.
@@ -140,7 +177,7 @@ tlt yolo_v4 inference \
     -k MY_KEY
 ```
 
-Below you can see two example images after training.
+Below you can see two example images after training. It's evident that the model does not perform well on the unlabeled image. Therefore, we want to do add more samples to the training dataset.
 
 <img src="./docs/examples/MinneApple_labeled_vs_unlabeled.png">
 
@@ -148,9 +185,61 @@ Below you can see two example images after training.
 ### 2.3 Active Learning Step <a name=alstep>
 We can use the inferences from the previous step to determine with which images the model has problems. With Lightly, we can easily select these images while at the same time making sure that our training dataset is not flooded with duplicates.
 
-This section is about how to select the images which complete your training dataset.
+This section is about how to select the images which complete your training dataset. We can use the `active_learning_query.py` script again but this time we have to indicate that there already exists a set of preselected images and indicate where the inferences are stored so that the script can compute active learning scores.
 
-TODO
+Furthermore, we will use `CORAL` as a sampling method. `CORAL` imultaneously maximizes the diversity and the sum of the active learning scores in the sampled data.
+
+```
+python active_learning_query.py \
+    --token YOUR_TOKEN \
+    --dataset_id YOUR_DATASET_ID \
+    --preselected_tag_name 'initial-selection' \
+    --new_tag_name 'al-iteration-1' \
+    --n_samples 200
+    --method CORAL
+```
+
+The script works very similar to before but with one significant difference: This time, all the inferred labels are loaded and used to calculate an active learning score for each sample:
+
+```python
+# create a scorer to calculate active learning scores based on model outputs
+scorer = ScorerObjectDetection(model_outputs)
+```
+
+The rest of the script is almost same as for the initial selection:
+
+```python
+# create an api client
+client = ApiWorkflowClient(
+    token=YOUR_TOKEN,
+    dataset_id=YOUR_DATASET_ID,
+)
+
+# create an active learning agent and set the preselected tag
+al_agent = ActiveLearningAgent(
+    client,
+    preselected_tag_name='initial-selection',
+)
+
+# create a sampler configuration
+config = SamplerConfig(
+    n_samples=200,
+    method=SamplingMethod.CORAL,
+    name='al-iteration-1',
+)
+
+# make an active learning query
+al_agent.query(config, scorer)
+
+# simulate the annotation step
+oracle.annotate_images(al_agent.added_set)
+```
+
+As before, we can check the number of images in the training set:
+```
+ls data/train/images | wc -l
+ls data/train/labels | wc -l
+```
 
 ### 2.4 Re-training <a name=retraining>
 
@@ -163,3 +252,5 @@ tlt yolo_v4 train \
     --gpus 1 \
     -k MY_KEY
 ```
+
+If you're still unhappy with the performance after re-training the model, you can repeat steps [2.2](#training) and [2.3](#alstep) and the re-train the model again.

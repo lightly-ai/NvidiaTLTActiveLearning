@@ -1,0 +1,84 @@
+random_seed: 42
+yolov4_config {
+  big_anchor_shape: "[(29.33, 27.00), (32.27, 35.00), (41.07, 42.00)]"
+  mid_anchor_shape: "[(20.53, 21.00), (25.42, 20.00), (22.49, 29.00)]"
+  small_anchor_shape: "[(15.64, 12.00), (12.71, 18.00), (17.60, 22.00)]"
+  box_matching_iou: 0.25
+  arch: "resnet"
+  nlayers: 18
+  arch_conv_blocks: 2
+  loss_loc_weight: 0.8
+  loss_neg_obj_weights: 100.0
+  loss_class_weights: 0.5
+  label_smoothing: 0.0
+  big_grid_xy_extend: 0.05
+  mid_grid_xy_extend: 0.1
+  small_grid_xy_extend: 0.2
+  freeze_bn: false
+  #freeze_blocks: 0
+  force_relu: false
+}
+training_config {
+  batch_size_per_gpu: 8
+  num_epochs: 50
+  enable_qat: false
+  checkpoint_interval: 10
+  learning_rate {
+    soft_start_cosine_annealing_schedule {
+      min_learning_rate: 1e-7
+      max_learning_rate: 1e-4
+      soft_start: 0.3
+    }
+  }
+  regularizer {
+    type: L1
+    weight: 3e-5
+  }
+  optimizer {
+    adam {
+      epsilon: 1e-7
+      beta1: 0.9
+      beta2: 0.999
+      amsgrad: false
+    }
+  }
+  pretrain_model_path: "/workspace/tlt-experiments/yolo_v4/pretrained_resnet18/tlt_pretrained_object_detection_vresnet18/resnet_18.hdf5"
+}
+eval_config {
+  average_precision_mode: SAMPLE
+  batch_size: 1
+  matching_iou_threshold: 0.5
+}
+nms_config {
+  confidence_threshold: 0.001
+  clustering_iou_threshold: 0.5
+  top_k: 200
+}
+augmentation_config {
+  hue: 0.1
+  saturation: 1.5
+  exposure:1.5
+  vertical_flip:0
+  horizontal_flip: 0.5
+  jitter: 0.3
+  output_width: 704
+  output_height: 1280
+  randomize_input_shape_period: 0
+  mosaic_prob: 0.5
+  mosaic_min_ratio:0.2
+}
+dataset_config {
+  data_sources: {
+      label_directory_path: "/workspace/tlt-experiments/data/train/labels"
+      image_directory_path: "/workspace/tlt-experiments/data/train/images"
+  }
+  include_difficult_in_training: true
+  validation_data_sources: {
+      label_directory_path: "/workspace/tlt-experiments/data/train/labels"
+      image_directory_path: "/workspace/tlt-experiments/data/train/images"
+  }
+     target_class_mapping {
+       key: "car"
+       value: "Apple"
+   }
+}
