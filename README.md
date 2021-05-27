@@ -40,6 +40,13 @@ To set up lightly, head to the [Lightly web-app](https://app.lightly.ai) and cre
 ### 1.2 Set up Nvidia TLT <a name=tlt>
 To install the Nvidia Transfer Learning Toolkit, follow [these instructions](https://docs.nvidia.com/metropolis/TLT/tlt-user-guide/text/requirements_and_installation.html). If you want to use your own scripts for training and inference, you can skip this part.
 
+
+Setting up Nvidia TLT can be done in a few minutes and consists of the follwing steps:
+1. Install [Docker](https://www.docker.com/).
+2. Install [Nvidia GPU driver](https://www.nvidia.com/Download/index.aspx?lang=en-us) v455.xx or abvoe.
+3. Install [nvidia docker2](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
+4. Get an [NGC account and API key](https://ngc.nvidia.com/catalog).
+
 To make all relevant directories accessible to the Nvidia TLT, we need to mount the current working directory and the `yolo_v4/specs` directory to the Nvidia TLT docker. We do so with the `mount.py` script.
 
 ```
@@ -175,7 +182,7 @@ ngc registry model download-version nvidia/tlt_pretrained_object_detection:resne
     --dest ./yolo_v4/pretrained_resnet18
 ```
 
-Finetuning the object detector on our sampled training data is as simple as the following command. Make sure to replace MY_KEY with the API token you get from your [Nvidia account](https://ngc.nvidia.com/setup/api-key).
+Finetuning the object detector on our sampled training data is as simple as the following command. Make sure to replace MY_KEY with the API token you get from your [Nvidia account](https://ngc.nvidia.com/catalog).
 
 ```
 mkdir -p $PWD/yolo_v4/experiment_dir_unpruned
