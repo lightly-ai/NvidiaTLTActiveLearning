@@ -2,7 +2,7 @@
 Tutorial on active learning with the Nvidia Transfer Learning Toolkit (TLT).
 
 
-In this tutorial, we will show you how you can do active learning for object detection with the [Nvidia Transfer Learning Toolkit](https://developer.nvidia.com/transfer-learning-toolkit). The task will be fruit detection. Accurately detecting and counting fruits is a critical step towards automating harvesting processes.
+In this tutorial, we will show you how you can do active learning for object detection with the [Nvidia Transfer Learning Toolkit](https://developer.nvidia.com/transfer-learning-toolkit). The task will be object detection of fruits at the plant. Accurately detecting and counting fruits is a critical step towards automating harvesting processes.
 Furthermore, fruit counting can be used to project expected yield and hence to detect low yield years early on.
 
 The structure of the tutorial is as follows:
@@ -52,7 +52,7 @@ Next, we need to specify all training configurations. The Nvidia TLT expects all
 - Target Class Mapping: To do transfer learning, we made a target class mapping from `car` to `apple`. This means that everytime the model would now predict a car, it predicts an apple instead.
 
 ### 1.3 Data <a name=data>
-We will use the [MinneApple fruit detection dataset](TODO). It consists of 670 training images of apple trees, annotated for detection and segmentation. The dataset contains images of trees with red and green apples.
+We will use the [MinneApple fruit detection dataset](http://rsn.cs.umn.edu/index.php/MinneApple). It consists of 670 training images of apple trees, annotated for detection and segmentation. The dataset contains images of trees with red and green apples.
 TODO download!
 
 ## 2 Active Learning <a name=al>
@@ -187,7 +187,7 @@ We can use the inferences from the previous step to determine with which images 
 
 This section is about how to select the images which complete your training dataset. We can use the `active_learning_query.py` script again but this time we have to indicate that there already exists a set of preselected images and indicate where the inferences are stored so that the script can compute active learning scores.
 
-Furthermore, we will use `CORAL` as a sampling method. `CORAL` imultaneously maximizes the diversity and the sum of the active learning scores in the sampled data.
+Furthermore, we will use `CORAL` as a sampling method. `CORAL` simultaneously maximizes the diversity and the sum of the active learning scores in the sampled data. #Comment: it does not "maximize the diversity [...] of the active learning scores". Perhaps: "CORAL simultaneously chooses a diverse subset of images and images with high active learning scores."
 
 ```
 python active_learning_query.py \
