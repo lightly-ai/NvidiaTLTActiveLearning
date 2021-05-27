@@ -63,7 +63,7 @@ In this tutorial we will use the [MinneApple fruit detection dataset](https://co
 
 **Note:** The Nvidia TLT expects the data and labels in the KITTI format. This means they expect one folder containing the images and one folder containing the annotations. The name of an image and its corresponding annotation file must be the same apart from the file extension. You can find the MinneApple dataset converted to this format attached to the first release of this tutorial. Alternatively, you can download the files from the official link and convert the labels yourself.
 
-Move the downloaded `minneapple.zip` file to the `data/` directory and unzip it
+Create a `data/` directory, move the downloaded `minneapple.zip` file there, and and unzip it
 
 ```
 cd data/
