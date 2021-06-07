@@ -1,6 +1,8 @@
 # Active Learning with the Nvidia TLT
 Tutorial on active learning with the Nvidia Transfer Learning Toolkit (TLT).
 
+**Disclaimer:** In order to run the Nvidia TLT, you need to setup Nvidia NGC and TLT. If you don't have this already, we will walk you through it in section [1.2](#tlt).
+
 
 In this tutorial, we will show you how you can do active learning for object detection with the [Nvidia Transfer Learning Toolkit](https://developer.nvidia.com/transfer-learning-toolkit). The task will be object detection of apples in a plantation setting. Accurately detecting and counting fruits is a critical step towards automating harvesting processes.
 Furthermore, fruit counting can be used to project expected yield and hence to detect low yield years early on.
@@ -38,6 +40,7 @@ pip install -r requirements.txt
 To set up `lightly` for active learning, head to the [Lightly Platform](https://app.lightly.ai) and create a free account by logging in. Make sure to get your token by clicking on your e-mail address and selecting "Preferences". You will need the token for the rest of this tutorial.
 
 ### 1.2 Set up Nvidia TLT <a name=tlt>
+
 To install the Nvidia Transfer Learning Toolkit, follow [these instructions](https://docs.nvidia.com/metropolis/TLT/tlt-user-guide/text/requirements_and_installation.html). If you want to use custom scripts for training and inference, you can skip this part.
 
 
@@ -97,6 +100,8 @@ To do active learning with Lightly, you first need to upload your dataset to the
 
 > You can also upload thumbnails or even just metadata about the images. See [this link](https://docs.lightly.ai/lightly.cli.html#lightly.cli.upload_cli.upload_cli) for more information.
 
+> If you get an out-of-memory error, try decreasing the input size of the images with, e.g., `collate.input_size=128`.
+
 ```
 lightly-magic \
     input_dir=./data/raw/images \
@@ -116,7 +121,7 @@ Once the upload has finished, you can visually explore your dataset in the [Ligh
 
 ### 2.1 Initial Sampling <a name=sampling>
 
-Now, let's select an initial batch of images which for annotation and training.
+Now, let's select an initial batch of images for annotation and training.
 
 Lightly offers different sampling strategies, the most prominent ones being `CORESET` and `RANDOM` sampling. `RANDOM` sampling will preserve the underlying distribution of your dataset well while `CORESET` maximizes the heterogeneity of your dataset. While exploring our dataset in the [Lightly Platform](https://app.lightly.ai), we noticed many different clusters therefore we choose `CORESET` sampling to make sure that every cluster is represented in the training data.
 
@@ -130,6 +135,8 @@ python active_learning_query.py \
     --n_samples 100 \
     --method CORESET
 ```
+
+> The script will create a new tag name `initial-selection` in the Lightly web-app. In case you want to run the script again, make sure to first change the `new_tag_name` to something else.
 
 The above script roughly performs the following steps:
 
@@ -161,7 +168,7 @@ cofnig = SamplerConfig(
 al_agent.query(config)
 
 # simulate annotation step by copying the data to the data/train directory 
-oracle.annotate_images(al_agent.added_set)
+helpers.annotate_images(al_agent.added_set)
 ```
 
 The `query` will automatically create a new tag with the name `initial-selection` in the Lightly Platform.
@@ -170,6 +177,11 @@ You can verify that the number of annotated images is correct like this:
 ```
 ls data/train/images | wc -l
 ls data/train/labels | wc -l
+```
+The expected output is:
+```
+100
+100
 ```
 
 ### 2.2 Training and Inference <a name=training>
@@ -183,7 +195,9 @@ ngc registry model download-version nvidia/tlt_pretrained_object_detection:resne
     --dest ./yolo_v4/pretrained_resnet18
 ```
 
-Finetuning the object detector on the sampled training data is as simple as the following command. Make sure to replace YOUR_KEY with the API token you get from your [Nvidia account](https://ngc.nvidia.com/catalog).
+Finetuning the object detector on the sampled training data is as simple as the following command. Make sure to replace YOUR_KEY with the API token you get from your [Nvidia account](https://ngc.nvidia.com/catalog)
+
+> If you get an out-of-memory-error you can change the size of the input images and the batch size in the `yolo_v4/specs/yolo_v4_minneapple.txt` file. Change `output_width`/`output_height` or `batch_size_per_gpu` respectively.
 
 ```
 mkdir -p $PWD/yolo_v4/experiment_dir_unpruned
@@ -217,6 +231,8 @@ Below you can see two example images after training. It's evident that the model
 You can use the inferences from the previous step to determine which images cause the model problems. With Lightly, you can easily select these images while at the same time making sure that your training dataset is not flooded with duplicates.
 
 This section is about how to select the images which complete your training dataset. You can use the `active_learning_query.py` script again but this time you have to indicate that there already exists a set of preselected images and point the script to where the inferences are stored.
+
+Note that the `n_samples` argument indicates the total number of samples after the active learning query. The initial selection holds 100 samples and we want to add another 100 to the labeled set. Therefore, we set `n_samples=200`. 
 
 Use `CORAL` instead of `CORESET` as a sampling method. `CORAL` simultaneously maximizes the diversity and the sum of the active learning scores in the sampled data.
 
@@ -263,13 +279,18 @@ config = SamplerConfig(
 al_agent.query(config, scorer)
 
 # simulate the annotation step
-oracle.annotate_images(al_agent.added_set)
+helpers.annotate_images(al_agent.added_set)
 ```
 
 As before, we can check the number of images in the training set:
 ```
 ls data/train/images | wc -l
 ls data/train/labels | wc -l
+```
+The expected output is:
+```
+200
+200
 ```
 
 ### 2.4 Re-training <a name=retraining>
