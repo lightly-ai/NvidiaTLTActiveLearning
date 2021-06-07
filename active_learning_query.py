@@ -6,7 +6,6 @@ from lightly.active_learning.agents import ActiveLearningAgent
 from lightly.active_learning.config import SamplerConfig
 from lightly.active_learning.scorers import ScorerObjectDetection
 
-import oracle
 import helpers
 
 
@@ -59,4 +58,4 @@ if __name__ == '__main__':
     al_agent.query(config, scorer)
 
     # simulate annotation step by copying the data to the data/train directory
-    oracle.annotate_images(al_agent.added_set)
+    helpers.annotate_images(al_agent.added_set)
