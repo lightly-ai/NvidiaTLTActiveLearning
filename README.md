@@ -160,7 +160,7 @@ Finally, it creates a sampling configuration, makes an active learning query, an
 
 ```python
 # make an active learning query
-cofnig = SamplerConfig(
+config = SamplerConfig(
     n_samples=100,
     method=SamplingMethod.CORESET,
     name='initial-selection',
