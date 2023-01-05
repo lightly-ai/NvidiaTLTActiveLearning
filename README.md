@@ -1,5 +1,9 @@
 # Active Learning with the Nvidia TLT
+
+
 Tutorial on active learning with the Nvidia Transfer Learning Toolkit (TLT).
+
+**Note:** This tutorial is outdated! For the up-to-date tutorial please refer to [NvidiaTAOActiveLearning](https://github.com/lightly-ai/NvidiaTAOActiveLearning).
 
 **Disclaimer:** In order to run the Nvidia TLT, you need to setup Nvidia NGC and TLT. If you don't have this already, we will walk you through it in section [1.2](#tlt).
 
